@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ユーチューブクローン - カテゴリーと無限スクロール</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* CSS リセット */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* ヘッダー */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-img {
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .search-container {
+            display: flex;
+            width: 50%;
+        }
+
+        .search-container input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 2px 0 0 2px;
+        }
+
+        .search-container button {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-left: none;
+            cursor: pointer;
+            padding: 8px 12px;
+        }
+
+        .user-d {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user {
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* サイドバー */
+        .sidebar {
+            width: 240px;
+            background-color: white;
+            height: 100vh;
+            position: fixed;
+            top: 56px;
+            left: 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-category {
+            padding: 15px 20px;
+            cursor: pointer;
+        }
+
+        .sidebar-category:hover, .selected {
+            background-color: #e5e5e5;
+            font-weight: bold;
+        }
+
+        /* メインコンテンツ */
+        .main-content {
+            margin-left: 240px;
+            padding: 20px;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .video-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .video-card:hover {
+            transform: scale(1.05);
+        }
+
+        .thumbnail {
+            width: 100%;
+        }
+
+        .video-title {
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .search-container {
+                width: 100%;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar {
+                width: 60px;
+            }
+
+            .sidebar-category {
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ダークモード */
+        .dark-mode {
+            background-color: #181818;
+            color: #ffffff;
+        }
+
+        .dark-mode .header-container, .dark-mode .sidebar {
+            background-color: #212121;
+        }
+    </style>
+</head>
+<body>
+    <header class="header-container">
+        <div class="logo">
+            <img src="logo.png" alt="ユーチューブロゴ" class="logo-img">
+        </div>
+        <div class="search-container">
+            <input type="text" placeholder="検索">
+            <button><i class="fas fa-search"></i></button>
+        </div>
+        <div class="user-d">
+            <button id="toggle-dark-mode"><i class="fas fa-moon"></i></button>
+            <img src="user-icon.png" alt="ユーザー" class="user">
+        </div>
+    </header>
+
+    <nav class="sidebar">
+        <div class="sidebar-category selected">アイドル</div>
+        <div class="sidebar-category">歴史</div>
+        <div class="sidebar-category">アニメ</div>
+        <div class="sidebar-category">日本語</div>
+        <div class="sidebar-category">プログラミング</div>
+        <div class="sidebar-category">パワー</div>
+        <div class="sidebar-category">キョウ</div>
+    </nav>
+
+    <main class="main-content">
+        <div class="video-grid" id="video-grid">
+            <div class="video-card">
+                <img src="thumbnail1.jpg" alt="サムネイル1" class="thumbnail">
+                <h3 class="video-title">動画タイトル 1</h3>
+            </div>
+            <div class="video-card">
+                <img src="thumbnail2.jpg" alt="サムネイル2" class="thumbnail">
+                <h3 class="video-title">動画タイトル 2</h3>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const videoGrid = document.getElementById('video-grid');
+
+        const newVideos = [
+            { title: '動画タイトル 3', thumbnail: 'thumbnail3.jpg' },
+            { title: '動画タイトル 4', thumbnail: 'thumbnail4.jpg' },
+            { title: '動画タイトル 5', thumbnail: 'thumbnail5.jpg' },
+        ];
+
+        function loadMoreVideos() {
+            newVideos.forEach(video => {
+                const videoCard = document.createElement('div');
+                videoCard.classList.add('video-card');
+                videoCard.innerHTML = `
+                    <img src="${video.thumbnail}" alt="${video.title}" class="thumbnail">
+                    <h3 class="video-title">${video.title}</h3>
+                `;
+                videoGrid.appendChild(videoCard);
+            });
+        }
+
+        window.addEventListener('scroll', () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+                loadMoreVideos();
+            }
+        });
+
+        const toggleDarkMode = document.getElementById('toggle-dark-mode');
+        toggleDarkMode.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+    </script>
+</body>
+</html>
